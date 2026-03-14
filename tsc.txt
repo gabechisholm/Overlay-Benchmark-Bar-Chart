@@ -1,0 +1,1 @@
+﻿src/visual.ts(109,13): error TS2353: Object literal may only specify known properties, and 'showAllDataPoints' does not exist in type 'VisualSettings'.

@@ -1,0 +1,257 @@
+{
+  "dataRoles": [
+    {
+      "displayName": "Base Category (e.g. Region)",
+      "name": "group",
+      "kind": "Grouping"
+    },
+    {
+      "displayName": "Sub-Category (e.g. Products)",
+      "name": "series",
+      "kind": "Grouping"
+    },
+    {
+      "displayName": "Actual Target Value",
+      "name": "actual",
+      "kind": "Measure"
+    },
+    {
+      "displayName": "Benchmark Comparison Value",
+      "name": "benchmark",
+      "kind": "Measure"
+    }
+  ],
+  "dataViewMappings": [
+    {
+      "categorical": {
+        "categories": {
+          "for": {
+            "in": "group"
+          }
+        },
+        "values": {
+          "group": {
+            "by": "series",
+            "select": [
+              {
+                "bind": {
+                  "to": "actual"
+                }
+              },
+              {
+                "bind": {
+                  "to": "benchmark"
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "objects": {
+    "legend": {
+        "displayName": "Legend",
+        "properties": {
+            "show": { "displayName": "Show", "type": { "bool": true } },
+            "position": { "displayName": "Position", "type": { "enumeration": [
+                {"value": "Top", "displayName": "Top"},
+                {"value": "Bottom", "displayName": "Bottom"},
+                {"value": "Left", "displayName": "Left"},
+                {"value": "Right", "displayName": "Right"},
+                {"value": "TopCenter", "displayName": "Top Center"},
+                {"value": "BottomCenter", "displayName": "Bottom Center"},
+                {"value": "LeftCenter", "displayName": "Left Center"},
+                {"value": "RightCenter", "displayName": "Right Center"},
+                {"value": "TopLeft", "displayName": "Top Left"},
+                {"value": "TopRight", "displayName": "Top Right"},
+                {"value": "BottomLeft", "displayName": "Bottom Left"},
+                {"value": "BottomRight", "displayName": "Bottom Right"}
+            ] } },
+            "showTitle": { "displayName": "Title", "type": { "bool": true } },
+            "titleText": { "displayName": "Title text", "type": { "text": true } },
+            "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
+            "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
+            "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } }
+        }
+    },
+    "categoryAxis": {
+      "displayName": "X-axis",
+      "properties": {
+        "show": { "displayName": "Show", "type": { "bool": true } },
+        "labelOffset": { "displayName": "Label offset", "type": { "numeric": true } },
+        "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
+        "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
+        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+        "showTitle": { "displayName": "Title", "type": { "bool": true } },
+        "titleText": { "displayName": "Title text", "type": { "text": true } },
+        "titleColor": { "displayName": "Title color", "type": { "fill": { "solid": { "color": true } } } },
+        "titleFontSize": { "displayName": "Title text size", "type": { "numeric": true } },
+        "titleFontFamily": { "displayName": "Title font family", "type": { "formatting": { "fontFamily": true } } }
+      }
+    },
+    "valueAxis": {
+      "displayName": "Y-axis",
+      "properties": {
+        "show": { "displayName": "Show", "type": { "bool": true } },
+        "showAxisLine": { "displayName": "Show axis line", "type": { "bool": true } },
+        "position": { "displayName": "Position", "type": { "enumeration": [
+                {"value": "Left", "displayName": "Left"},
+                {"value": "Right", "displayName": "Right"}
+            ] } },
+        "start": { "displayName": "Start", "type": { "numeric": true } },
+        "end": { "displayName": "End", "type": { "numeric": true } },
+        "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
+        "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
+        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+        "showTitle": { "displayName": "Title", "type": { "bool": true } },
+        "titleText": { "displayName": "Title text", "type": { "text": true } },
+        "titleColor": { "displayName": "Title color", "type": { "fill": { "solid": { "color": true } } } },
+        "titleFontSize": { "displayName": "Title text size", "type": { "numeric": true } },
+        "titleFontFamily": { "displayName": "Title font family", "type": { "formatting": { "fontFamily": true } } }
+      }
+    },
+    "gridlines": {
+        "displayName": "Gridlines",
+        "properties": {
+            "show": { "displayName": "Show", "type": { "bool": true } },
+            "color": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
+            "strokeWidth": { "displayName": "Stroke width", "type": { "numeric": true } },
+            "lineStyle": { "displayName": "Line style", "type": { "enumeration": [
+                {"value": "solid", "displayName": "Solid"},
+                {"value": "dashed", "displayName": "Dashed"},
+                {"value": "dotted", "displayName": "Dotted"}
+            ] } }
+        }
+    },
+    "columns": {
+      "displayName": "Columns",
+      "properties": {
+        "actualColor": {
+          "displayName": "Actual colour",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "actualTransparency": {
+          "displayName": "Actual transparency",
+          "type": {
+            "numeric": true
+          }
+        },
+        "benchmarkColor": {
+          "displayName": "Benchmark colour",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "benchmarkTransparency": {
+          "displayName": "Benchmark transparency",
+          "type": {
+            "numeric": true
+          }
+        },
+        "seriesSelection": {
+          "displayName": "Series",
+          "type": {
+            "text": true
+          }
+        },
+        "fill": {
+          "displayName": "Fill",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "actualWidth": {
+          "displayName": "Actual width %",
+          "type": {
+            "numeric": true
+          }
+        },
+        "innerPadding": { "displayName": "Inner padding", "type": { "numeric": true } },
+        "groupPadding": { "displayName": "Group padding", "type": { "numeric": true } }
+      }
+    },
+    "dataLabels": {
+        "displayName": "Data labels",
+        "properties": {
+            "show": { "displayName": "Show", "type": { "bool": true } },
+            "color": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
+            "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
+            "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+            "displayUnits": { "displayName": "Display units", "type": { "numeric": true } },
+            "valueDecimalPlaces": { "displayName": "Value decimal places", "type": { "numeric": true } },
+            "position": { "displayName": "Position", "type": { "enumeration": [
+                {"value": "Auto", "displayName": "Auto"},
+                {"value": "InsideEnd", "displayName": "Inside end"},
+                {"value": "InsideCenter", "displayName": "Inside center"},
+                {"value": "InsideBase", "displayName": "Inside base"},
+                {"value": "OutsideEnd", "displayName": "Outside end"}
+            ] } }
+        }
+    },
+    "benchmarkLabels": {
+      "displayName": "Benchmark labels",
+      "properties": {
+        "show": {
+          "displayName": "Show",
+          "type": {
+            "bool": true
+          }
+        },
+        "labelPrefix": {
+          "displayName": "Label prefix",
+          "type": {
+            "text": true
+          }
+        },
+        "fontSize": {
+          "displayName": "Font size",
+          "type": {
+            "numeric": true
+          }
+        },
+        "fontFamily": {
+          "displayName": "Font family",
+          "type": {
+            "formatting": {
+              "fontFamily": true
+            }
+          }
+        },
+        "color": {
+          "displayName": "Color",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "supportsHighlight": true,
+  "supportsKeyboardFocus": true,
+  "supportsMultiVisualSelection": true,
+  "supportsEmptyDataView": true,
+  "supportsLandingPage": true,
+  "sorting": {
+    "default": {}
+  },
+  "privileges": []
+}

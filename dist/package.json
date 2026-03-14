@@ -1,0 +1,17 @@
+{
+		"version": "1.0.0.0",
+		"author": {"name":"Gabe Chisholm","email":"gabe.chisholm@synapsysiq.co.uk"},
+		"resources": [
+			{
+				"resourceId": "rId0",
+				"sourceType": 5,
+				"file": "resources/overlayBenchmarkBar1234567890.pbiviz.json"
+			}
+		],
+		"visual": {"name":"overlayBenchmarkBar","displayName":"Overlay Benchmark Bar Chart","guid":"overlayBenchmarkBar1234567890","visualClassName":"Visual","version":"1.0.0.0","description":"A custom Power BI visual that overlays a benchmark bar behind an actual value bar.","supportUrl":"gabe.chisholm@synapsysiq.co.uk","gitHubUrl":""},
+		"metadata": {
+			"pbivizjson": {
+				"resourceId": "rId0"
+			}
+		}
+	}
