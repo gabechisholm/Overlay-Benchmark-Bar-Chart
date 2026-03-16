@@ -113,7 +113,7 @@ See the `LICENSE` file for details.
 
 If you encounter issues, have feature requests, or need help using the visual:
 
-- Email me at **gabe.chisholm@synapsysiq.co.uk
+- Email me at gabe.chisholm@synapsysiq.co.uk
 - Provide a short description of the issue and screenshots where possible
 
 Feedback and suggestions for improvements are welcome.
