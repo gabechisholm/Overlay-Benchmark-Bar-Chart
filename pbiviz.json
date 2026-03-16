@@ -2,12 +2,12 @@
   "visual": {
     "name": "overlayBenchmarkBar",
     "displayName": "Overlay Benchmark Bar Chart",
-    "guid": "overlayBenchmarkBar1234567890",
+    "guid": "overlayBenchmarkBarChart",
     "visualClassName": "Visual",
     "version": "1.0.0.0",
     "description": "A custom Power BI visual that overlays a benchmark bar behind an actual value bar.",
     "supportUrl": "gabe.chisholm@synapsysiq.co.uk",
-    "gitHubUrl": ""
+    "gitHubUrl": "https://github.com/gabechisholm/Overlay-Benchmark-Bar-Chart"
   },
   "apiVersion": "5.3.0",
   "author": {
