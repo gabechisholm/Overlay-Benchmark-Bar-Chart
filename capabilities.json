@@ -72,7 +72,10 @@
             "titleText": { "displayName": "Title text", "type": { "text": true } },
             "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
             "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
-            "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } }
+            "fontFamily": { "displayName": "Font", "type": { "formatting": { "fontFamily": true } } },
+            "bold": { "displayName": "Bold", "type": { "bool": true } },
+            "italic": { "displayName": "Italic", "type": { "bool": true } },
+            "underline": { "displayName": "Underline", "type": { "bool": true } }
         }
     },
     "categoryAxis": {
@@ -80,14 +83,22 @@
       "properties": {
         "show": { "displayName": "Show", "type": { "bool": true } },
         "labelOffset": { "displayName": "Label offset", "type": { "numeric": true } },
+        "padding": { "displayName": "Padding", "type": { "numeric": true } },
+        "showValues": { "displayName": "Values", "type": { "bool": true } },
         "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
         "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
-        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+        "fontFamily": { "displayName": "Font", "type": { "formatting": { "fontFamily": true } } },
+        "bold": { "displayName": "Bold", "type": { "bool": true } },
+        "italic": { "displayName": "Italic", "type": { "bool": true } },
+        "underline": { "displayName": "Underline", "type": { "bool": true } },
         "showTitle": { "displayName": "Title", "type": { "bool": true } },
         "titleText": { "displayName": "Title text", "type": { "text": true } },
         "titleColor": { "displayName": "Title color", "type": { "fill": { "solid": { "color": true } } } },
         "titleFontSize": { "displayName": "Title text size", "type": { "numeric": true } },
-        "titleFontFamily": { "displayName": "Title font family", "type": { "formatting": { "fontFamily": true } } }
+        "titleFontFamily": { "displayName": "Title font", "type": { "formatting": { "fontFamily": true } } },
+        "titleBold": { "displayName": "Bold", "type": { "bool": true } },
+        "titleItalic": { "displayName": "Italic", "type": { "bool": true } },
+        "titleUnderline": { "displayName": "Underline", "type": { "bool": true } }
       }
     },
     "valueAxis": {
@@ -101,14 +112,22 @@
             ] } },
         "start": { "displayName": "Start", "type": { "numeric": true } },
         "end": { "displayName": "End", "type": { "numeric": true } },
+        "padding": { "displayName": "Padding", "type": { "numeric": true } },
+        "showValues": { "displayName": "Values", "type": { "bool": true } },
         "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
         "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
-        "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+        "fontFamily": { "displayName": "Font", "type": { "formatting": { "fontFamily": true } } },
+        "bold": { "displayName": "Bold", "type": { "bool": true } },
+        "italic": { "displayName": "Italic", "type": { "bool": true } },
+        "underline": { "displayName": "Underline", "type": { "bool": true } },
         "showTitle": { "displayName": "Title", "type": { "bool": true } },
         "titleText": { "displayName": "Title text", "type": { "text": true } },
         "titleColor": { "displayName": "Title color", "type": { "fill": { "solid": { "color": true } } } },
         "titleFontSize": { "displayName": "Title text size", "type": { "numeric": true } },
-        "titleFontFamily": { "displayName": "Title font family", "type": { "formatting": { "fontFamily": true } } }
+        "titleFontFamily": { "displayName": "Title font", "type": { "formatting": { "fontFamily": true } } },
+        "titleBold": { "displayName": "Bold", "type": { "bool": true } },
+        "titleItalic": { "displayName": "Italic", "type": { "bool": true } },
+        "titleUnderline": { "displayName": "Underline", "type": { "bool": true } }
       }
     },
     "gridlines": {
@@ -116,7 +135,9 @@
         "properties": {
             "show": { "displayName": "Show", "type": { "bool": true } },
             "color": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
+            "transparency": { "displayName": "Transparency", "type": { "numeric": true } },
             "strokeWidth": { "displayName": "Stroke width", "type": { "numeric": true } },
+            "scaleByWidth": { "displayName": "Scale by width", "type": { "bool": true } },
             "lineStyle": { "displayName": "Line style", "type": { "enumeration": [
                 {"value": "solid", "displayName": "Solid"},
                 {"value": "dashed", "displayName": "Dashed"},
@@ -175,6 +196,28 @@
             }
           }
         },
+        "showBorder": {
+          "displayName": "Show border",
+          "type": {
+            "bool": true
+          }
+        },
+        "borderColor": {
+          "displayName": "Border colour",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "borderWidth": {
+          "displayName": "Border width",
+          "type": {
+            "numeric": true
+          }
+        },
         "actualWidth": {
           "displayName": "Actual width %",
           "type": {
@@ -189,9 +232,13 @@
         "displayName": "Data labels",
         "properties": {
             "show": { "displayName": "Show", "type": { "bool": true } },
+            "showValues": { "displayName": "Values", "type": { "bool": true } },
             "color": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
             "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
-            "fontFamily": { "displayName": "Font family", "type": { "formatting": { "fontFamily": true } } },
+            "fontFamily": { "displayName": "Font", "type": { "formatting": { "fontFamily": true } } },
+            "bold": { "displayName": "Bold", "type": { "bool": true } },
+            "italic": { "displayName": "Italic", "type": { "bool": true } },
+            "underline": { "displayName": "Underline", "type": { "bool": true } },
             "displayUnits": { "displayName": "Display units", "type": { "numeric": true } },
             "valueDecimalPlaces": { "displayName": "Value decimal places", "type": { "numeric": true } },
             "position": { "displayName": "Position", "type": { "enumeration": [
@@ -225,12 +272,36 @@
           }
         },
         "fontFamily": {
-          "displayName": "Font family",
+          "displayName": "Font",
           "type": {
             "formatting": {
               "fontFamily": true
             }
           }
+        },
+        "bold": {
+          "displayName": "Bold",
+          "type": {
+            "bool": true
+          }
+        },
+        "italic": {
+          "displayName": "Italic",
+          "type": {
+            "bool": true
+          }
+        },
+        "underline": {
+          "displayName": "Underline",
+          "type": {
+            "bool": true
+          }
+        },
+        "valueDecimalPlaces": { 
+          "displayName": "Value decimal places", 
+          "type": { 
+            "numeric": true 
+          } 
         },
         "color": {
           "displayName": "Color",
@@ -242,6 +313,15 @@
             }
           }
         }
+      }
+    },
+    "chartPadding": {
+      "displayName": "Chart padding",
+      "properties": {
+        "top":    { "displayName": "Top",    "type": { "numeric": true } },
+        "right":  { "displayName": "Right",  "type": { "numeric": true } },
+        "bottom": { "displayName": "Bottom", "type": { "numeric": true } },
+        "left":   { "displayName": "Left",   "type": { "numeric": true } }
       }
     }
   },
