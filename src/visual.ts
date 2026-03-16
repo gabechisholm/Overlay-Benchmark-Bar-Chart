@@ -51,6 +51,10 @@ export class Visual implements IVisual {
     private latestSeriesList: string[] = [];
     private seriesOverrides: Record<string, Partial<SeriesStyle>> = {};
     private seriesSelectors: Record<string, powerbi.data.Selector> = {};
+    private latestGroupList: string[] = [];
+    private groupOverrides: Record<string, Partial<SeriesStyle>> = {};
+    private groupSelectors: Record<string, powerbi.data.Selector> = {};
+    private hasSeries: boolean = false;
 
     constructor(options: VisualConstructorOptions) {
         this.host = options.host;
@@ -75,18 +79,29 @@ export class Visual implements IVisual {
             legendLabelColor: "#666666",
             legendFontSize: 9,
             legendFontFamily: "Segoe UI",
+            legendBold: false,
+            legendItalic: false,
+            legendUnderline: false,
 
             // X-axis
             xAxisShow: true,
             xAxisLabelOffset: 3,
+            xAxisPadding: 0,
+            xAxisShowValues: true,
             xAxisLabelColor: "#666666",
             xAxisFontSize: 9,
             xAxisFontFamily: "Segoe UI",
+            xAxisBold: false,
+            xAxisItalic: false,
+            xAxisUnderline: false,
             xAxisShowTitle: true,
             xAxisTitleText: "",
             xAxisTitleColor: "#666666",
             xAxisTitleFontSize: 11,
             xAxisTitleFontFamily: "Segoe UI",
+            xAxisTitleBold: false,
+            xAxisTitleItalic: false,
+            xAxisTitleUnderline: false,
 
             // Y-axis
             yAxisShow: true,
@@ -94,23 +109,37 @@ export class Visual implements IVisual {
             yAxisPosition: "Left",
             yAxisStart: null,
             yAxisEnd: null,
+            yAxisPadding: 0,
+            yAxisShowValues: true,
             yAxisLabelColor: "#666666",
             yAxisFontSize: 9,
             yAxisFontFamily: "Segoe UI",
+            yAxisBold: false,
+            yAxisItalic: false,
+            yAxisUnderline: false,
             yAxisShowTitle: true,
             yAxisTitleText: "",
             yAxisTitleColor: "#666666",
             yAxisTitleFontSize: 11,
             yAxisTitleFontFamily: "Segoe UI",
+            yAxisTitleBold: false,
+            yAxisTitleItalic: false,
+            yAxisTitleUnderline: false,
 
             // Gridlines
             gridlinesShow: true,
             gridlinesColor: "#e6e6e6",
+            gridlinesTransparency: 0,
             gridlinesStrokeWidth: 1,
+            gridlinesScaleByWidth: false,
             gridlinesLineStyle: "dotted",
 
             // Columns
             seriesSelection: "All",
+            fill: "",
+            showBorder: false,
+            borderColor: "#ffffff",
+            borderWidth: 1,
             actualColor: "",
             actualTransparency: 0,
             benchmarkColor: "",
@@ -121,9 +150,13 @@ export class Visual implements IVisual {
 
             // Data labels
             dataLabelsShow: false,
+            dataLabelsShowValues: true,
             dataLabelsColor: "#333333",
             dataLabelsFontSize: 9,
             dataLabelsFontFamily: "Segoe UI",
+            dataLabelsBold: false,
+            dataLabelsItalic: false,
+            dataLabelsUnderline: false,
             dataLabelsDisplayUnits: 0,
             dataLabelsValueDecimalPlaces: null,
             dataLabelsPosition: "Auto",
@@ -132,7 +165,16 @@ export class Visual implements IVisual {
             showBenchmarkLabels: true,
             benchmarkLabelPrefix: "National Average: ",
             benchmarkLabelFontSize: 9,
-            benchmarkLabelFontFamily: "Segoe UI"
+            benchmarkLabelFontFamily: "Segoe UI",
+            benchmarkLabelBold: false,
+            benchmarkLabelItalic: false,
+            benchmarkLabelUnderline: false,
+
+            // Chart padding
+            chartPaddingTop: 50,
+            chartPaddingRight: 20,
+            chartPaddingBottom: 75,
+            chartPaddingLeft: 60
         };
     }
 
@@ -153,7 +195,9 @@ export class Visual implements IVisual {
 
         if (!this.currentDataView?.categorical) {
             this.latestSeriesList = [];
+            this.latestGroupList = [];
             this.seriesOverrides = {};
+            this.groupOverrides = {};
             this.drawLandingMessage(width, height);
             this.renderingFinished();
             return;
@@ -163,15 +207,23 @@ export class Visual implements IVisual {
 
         if (!rows.length) {
             this.latestSeriesList = [];
+            this.latestGroupList = [];
             this.seriesOverrides = {};
             this.seriesSelectors = {};
+            this.groupOverrides = {};
+            this.groupSelectors = {};
+            this.hasSeries = false;
             this.drawLandingMessage(width, height);
             this.renderingFinished();
             return;
         }
 
         this.latestSeriesList = Array.from(new Set(rows.map(d => d.series))).sort();
+        this.latestGroupList = Array.from(new Set(rows.map(d => d.group)));
+        this.hasSeries = this.latestSeriesList.length > 1 || (this.latestSeriesList.length === 1 && this.latestSeriesList[0] !== "Unknown" && this.latestSeriesList[0] !== "");
+
         this.seriesOverrides = this.buildSeriesOverrides(this.currentDataView);
+        this.groupOverrides = this.buildGroupOverrides(this.currentDataView);
 
         this.drawChart(rows, width, height);
         this.renderingFinished();
@@ -190,20 +242,39 @@ export class Visual implements IVisual {
                 displayName: "Options",
                 uid: "legend_options_group",
                 slices: [
-                    this.makeDropdownSlice("legend_position", "Position", "legend", "position", this.settings.legendPosition),
-                    this.makeTextSlice("legend_titleText", "Title Text", "legend", "titleText", this.settings.legendTitleText),
+                    this.makeDropdownSlice("legend_position", "Position", "legend", "position", this.settings.legendPosition)
+                ]
+            }, {
+                displayName: "Text",
+                uid: "legend_text_group",
+                slices: [
                     this.makeColorSlice("legend_labelColor", "Color", "legend", "labelColor", this.settings.legendLabelColor),
-                    this.makeNumericSlice("legend_fontSize", "Text Size", "legend", "fontSize", this.settings.legendFontSize, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 8 } }),
-                    this.makeFontSlice("legend_fontFamily", "Font Family", "legend", "fontFamily", this.settings.legendFontFamily)
+                    this.makeFontControlSlice("legend_font", "legend",
+                        this.settings.legendFontFamily, "fontFamily",
+                        this.settings.legendFontSize, "fontSize",
+                        this.settings.legendBold, "bold",
+                        this.settings.legendItalic, "italic",
+                        this.settings.legendUnderline, "underline")
+                ]
+            }, {
+                displayName: "Title",
+                uid: "legend_title_group",
+                topLevelToggle: this.makeTopLevelToggle("legend", "showTitle", this.settings.legendShowTitle),
+                slices: [
+                    this.makeTextSlice("legend_titleText", "Title Text", "legend", "titleText", this.settings.legendTitleText)
                 ]
             }],
             revertToDefaultDescriptors: [
                 { objectName: "legend", propertyName: "show" },
                 { objectName: "legend", propertyName: "position" },
+                { objectName: "legend", propertyName: "showTitle" },
                 { objectName: "legend", propertyName: "titleText" },
                 { objectName: "legend", propertyName: "labelColor" },
                 { objectName: "legend", propertyName: "fontSize" },
-                { objectName: "legend", propertyName: "fontFamily" }
+                { objectName: "legend", propertyName: "fontFamily" },
+                { objectName: "legend", propertyName: "bold" },
+                { objectName: "legend", propertyName: "italic" },
+                { objectName: "legend", propertyName: "underline" }
             ]
         } as any);
 
@@ -214,31 +285,54 @@ export class Visual implements IVisual {
             analyticsPane: false,
             topLevelToggle: this.makeTopLevelToggle("categoryAxis", "show", this.settings.xAxisShow),
             groups: [{
-                displayName: "Options",
-                uid: "categoryAxis_options_group",
+                displayName: "Values",
+                uid: "categoryAxis_values_group",
+                topLevelToggle: this.makeTopLevelToggle("categoryAxis", "showValues", this.settings.xAxisShowValues),
                 slices: [
-                    this.makeNumericSlice("categoryAxis_labelOffset", "Label offset", "categoryAxis", "labelOffset", this.settings.xAxisLabelOffset),
                     this.makeColorSlice("categoryAxis_labelColor", "Color", "categoryAxis", "labelColor", this.settings.xAxisLabelColor),
-                    this.makeNumericSlice("categoryAxis_fontSize", "Text Size", "categoryAxis", "fontSize", this.settings.xAxisFontSize, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 8 } }),
-                    this.makeFontSlice("categoryAxis_fontFamily", "Font Family", "categoryAxis", "fontFamily", this.settings.xAxisFontFamily),
-                    this.makeBoolSlice("categoryAxis_showTitle", "Title", "categoryAxis", "showTitle", this.settings.xAxisShowTitle),
+                    this.makeFontControlSlice("categoryAxis_font", "categoryAxis",
+                        this.settings.xAxisFontFamily, "fontFamily",
+                        this.settings.xAxisFontSize, "fontSize",
+                        this.settings.xAxisBold, "bold",
+                        this.settings.xAxisItalic, "italic",
+                        this.settings.xAxisUnderline, "underline"),
+                    this.makeNumericSlice("categoryAxis_labelOffset", "Label offset", "categoryAxis", "labelOffset", this.settings.xAxisLabelOffset),
+                    this.makeNumericSlice("categoryAxis_padding", "Padding", "categoryAxis", "padding", this.settings.xAxisPadding)
+                ]
+            }, {
+                displayName: "Title",
+                uid: "categoryAxis_title_group",
+                topLevelToggle: this.makeTopLevelToggle("categoryAxis", "showTitle", this.settings.xAxisShowTitle),
+                slices: [
                     this.makeTextSlice("categoryAxis_titleText", "Title Text", "categoryAxis", "titleText", this.settings.xAxisTitleText),
                     this.makeColorSlice("categoryAxis_titleColor", "Title Color", "categoryAxis", "titleColor", this.settings.xAxisTitleColor),
-                    this.makeNumericSlice("categoryAxis_titleFontSize", "Title Text Size", "categoryAxis", "titleFontSize", this.settings.xAxisTitleFontSize, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 8 } }),
-                    this.makeFontSlice("categoryAxis_titleFontFamily", "Title Font Family", "categoryAxis", "titleFontFamily", this.settings.xAxisTitleFontFamily)
+                    this.makeFontControlSlice("categoryAxis_titleFont", "categoryAxis",
+                        this.settings.xAxisTitleFontFamily, "titleFontFamily",
+                        this.settings.xAxisTitleFontSize, "titleFontSize",
+                        this.settings.xAxisTitleBold, "titleBold",
+                        this.settings.xAxisTitleItalic, "titleItalic",
+                        this.settings.xAxisTitleUnderline, "titleUnderline")
                 ]
             }],
             revertToDefaultDescriptors: [
                 { objectName: "categoryAxis", propertyName: "show" },
+                { objectName: "categoryAxis", propertyName: "showValues" },
                 { objectName: "categoryAxis", propertyName: "labelOffset" },
+                { objectName: "categoryAxis", propertyName: "padding" },
                 { objectName: "categoryAxis", propertyName: "labelColor" },
                 { objectName: "categoryAxis", propertyName: "fontSize" },
                 { objectName: "categoryAxis", propertyName: "fontFamily" },
+                { objectName: "categoryAxis", propertyName: "bold" },
+                { objectName: "categoryAxis", propertyName: "italic" },
+                { objectName: "categoryAxis", propertyName: "underline" },
                 { objectName: "categoryAxis", propertyName: "showTitle" },
                 { objectName: "categoryAxis", propertyName: "titleText" },
                 { objectName: "categoryAxis", propertyName: "titleColor" },
                 { objectName: "categoryAxis", propertyName: "titleFontSize" },
-                { objectName: "categoryAxis", propertyName: "titleFontFamily" }
+                { objectName: "categoryAxis", propertyName: "titleFontFamily" },
+                { objectName: "categoryAxis", propertyName: "titleBold" },
+                { objectName: "categoryAxis", propertyName: "titleItalic" },
+                { objectName: "categoryAxis", propertyName: "titleUnderline" }
             ]
         } as any);
 
@@ -249,37 +343,65 @@ export class Visual implements IVisual {
             analyticsPane: false,
             topLevelToggle: this.makeTopLevelToggle("valueAxis", "show", this.settings.yAxisShow),
             groups: [{
+                displayName: "Values",
+                uid: "valueAxis_values_group",
+                topLevelToggle: this.makeTopLevelToggle("valueAxis", "showValues", this.settings.yAxisShowValues),
+                slices: [
+                    this.makeColorSlice("valueAxis_labelColor", "Color", "valueAxis", "labelColor", this.settings.yAxisLabelColor),
+                    this.makeFontControlSlice("valueAxis_font", "valueAxis",
+                        this.settings.yAxisFontFamily, "fontFamily",
+                        this.settings.yAxisFontSize, "fontSize",
+                        this.settings.yAxisBold, "bold",
+                        this.settings.yAxisItalic, "italic",
+                        this.settings.yAxisUnderline, "underline")
+                ]
+            }, {
+                displayName: "Title",
+                uid: "valueAxis_title_group",
+                topLevelToggle: this.makeTopLevelToggle("valueAxis", "showTitle", this.settings.yAxisShowTitle),
+                slices: [
+                    this.makeTextSlice("valueAxis_titleText", "Title Text", "valueAxis", "titleText", this.settings.yAxisTitleText),
+                    this.makeColorSlice("valueAxis_titleColor", "Title Color", "valueAxis", "titleColor", this.settings.yAxisTitleColor),
+                    this.makeFontControlSlice("valueAxis_titleFont", "valueAxis",
+                        this.settings.yAxisTitleFontFamily, "titleFontFamily",
+                        this.settings.yAxisTitleFontSize, "titleFontSize",
+                        this.settings.yAxisTitleBold, "titleBold",
+                        this.settings.yAxisTitleItalic, "titleItalic",
+                        this.settings.yAxisTitleUnderline, "titleUnderline")
+                ]
+            }, {
                 displayName: "Options",
                 uid: "valueAxis_options_group",
                 slices: [
                     this.makeDropdownSlice("valueAxis_position", "Position", "valueAxis", "position", this.settings.yAxisPosition),
                     this.makeBoolSlice("valueAxis_showAxisLine", "Show axis line", "valueAxis", "showAxisLine", this.settings.yAxisShowAxisLine),
-                    this.makeNumericSlice("valueAxis_start", "Start", "valueAxis", "start", this.settings.yAxisStart),
-                    this.makeNumericSlice("valueAxis_end", "End", "valueAxis", "end", this.settings.yAxisEnd),
-                    this.makeColorSlice("valueAxis_labelColor", "Color", "valueAxis", "labelColor", this.settings.yAxisLabelColor),
-                    this.makeNumericSlice("valueAxis_fontSize", "Text Size", "valueAxis", "fontSize", this.settings.yAxisFontSize, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 8 } }),
-                    this.makeFontSlice("valueAxis_fontFamily", "Font Family", "valueAxis", "fontFamily", this.settings.yAxisFontFamily),
-                    this.makeBoolSlice("valueAxis_showTitle", "Title", "valueAxis", "showTitle", this.settings.yAxisShowTitle),
-                    this.makeTextSlice("valueAxis_titleText", "Title Text", "valueAxis", "titleText", this.settings.yAxisTitleText),
-                    this.makeColorSlice("valueAxis_titleColor", "Title Color", "valueAxis", "titleColor", this.settings.yAxisTitleColor),
-                    this.makeNumericSlice("valueAxis_titleFontSize", "Title Text Size", "valueAxis", "titleFontSize", this.settings.yAxisTitleFontSize, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 8 } }),
-                    this.makeFontSlice("valueAxis_titleFontFamily", "Title Font Family", "valueAxis", "titleFontFamily", this.settings.yAxisTitleFontFamily)
+                    this.makeNumericSlice("valueAxis_start", "Start", "valueAxis", "start", this.settings.yAxisStart, undefined, { placeholder: "AUTO" }),
+                    this.makeNumericSlice("valueAxis_end", "End", "valueAxis", "end", this.settings.yAxisEnd, undefined, { placeholder: "AUTO" }),
+                    this.makeNumericSlice("valueAxis_padding", "Padding", "valueAxis", "padding", this.settings.yAxisPadding)
                 ]
             }],
             revertToDefaultDescriptors: [
                 { objectName: "valueAxis", propertyName: "show" },
+                { objectName: "valueAxis", propertyName: "showValues" },
                 { objectName: "valueAxis", propertyName: "position" },
                 { objectName: "valueAxis", propertyName: "showAxisLine" },
                 { objectName: "valueAxis", propertyName: "start" },
                 { objectName: "valueAxis", propertyName: "end" },
+                { objectName: "valueAxis", propertyName: "padding" },
                 { objectName: "valueAxis", propertyName: "labelColor" },
                 { objectName: "valueAxis", propertyName: "fontSize" },
                 { objectName: "valueAxis", propertyName: "fontFamily" },
+                { objectName: "valueAxis", propertyName: "bold" },
+                { objectName: "valueAxis", propertyName: "italic" },
+                { objectName: "valueAxis", propertyName: "underline" },
                 { objectName: "valueAxis", propertyName: "showTitle" },
                 { objectName: "valueAxis", propertyName: "titleText" },
                 { objectName: "valueAxis", propertyName: "titleColor" },
                 { objectName: "valueAxis", propertyName: "titleFontSize" },
-                { objectName: "valueAxis", propertyName: "titleFontFamily" }
+                { objectName: "valueAxis", propertyName: "titleFontFamily" },
+                { objectName: "valueAxis", propertyName: "titleBold" },
+                { objectName: "valueAxis", propertyName: "titleItalic" },
+                { objectName: "valueAxis", propertyName: "titleUnderline" }
             ]
         } as any);
 
@@ -294,14 +416,18 @@ export class Visual implements IVisual {
                 uid: "gridlines_options_group",
                 slices: [
                     this.makeColorSlice("gridlines_color", "Color", "gridlines", "color", this.settings.gridlinesColor),
+                    this.makeNumericSlice("gridlines_transparency", "Transparency", "gridlines", "transparency", this.settings.gridlinesTransparency, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 }, maxValue: { type: powerbi.visuals.ValidatorType.Max, value: 100 } }),
                     this.makeNumericSlice("gridlines_strokeWidth", "Stroke width", "gridlines", "strokeWidth", this.settings.gridlinesStrokeWidth, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } }),
+                    this.makeBoolSlice("gridlines_scaleByWidth", "Scale by width", "gridlines", "scaleByWidth", this.settings.gridlinesScaleByWidth),
                     this.makeDropdownSlice("gridlines_lineStyle", "Line Style", "gridlines", "lineStyle", this.settings.gridlinesLineStyle)
                 ]
             }],
             revertToDefaultDescriptors: [
                 { objectName: "gridlines", propertyName: "show" },
                 { objectName: "gridlines", propertyName: "color" },
+                { objectName: "gridlines", propertyName: "transparency" },
                 { objectName: "gridlines", propertyName: "strokeWidth" },
+                { objectName: "gridlines", propertyName: "scaleByWidth" },
                 { objectName: "gridlines", propertyName: "lineStyle" }
             ]
         } as any);
@@ -309,8 +435,10 @@ export class Visual implements IVisual {
         // 5. Columns Card
         const seriesItems: powerbi.IEnumMember[] = [{ value: "All", displayName: "All" }];
         
-        this.latestSeriesList.forEach(series => {
-            seriesItems.push({ value: series, displayName: series });
+        const targetList = this.hasSeries ? this.latestSeriesList : this.latestGroupList;
+
+        targetList.forEach(item => {
+            seriesItems.push({ value: item, displayName: item });
         });
 
         // Current selected series or "All"
@@ -320,14 +448,29 @@ export class Visual implements IVisual {
         }
 
         const isAll = selectedSeries === "All";
-        const targetColorActual = isAll ? this.settings.actualColor : this.getSeriesStyle(selectedSeries).actualColor;
-        const targetTransparencyActual = isAll ? this.settings.actualTransparency : this.opacityToTransparency(this.getSeriesStyle(selectedSeries).actualOpacity);
-        const targetColorBenchmark = isAll ? this.settings.benchmarkColor : this.getSeriesStyle(selectedSeries).benchmarkColor;
-        const targetTransparencyBenchmark = isAll ? this.settings.benchmarkTransparency : this.opacityToTransparency(this.getSeriesStyle(selectedSeries).benchmarkOpacity);
-        const targetSelector = isAll ? undefined : this.seriesSelectors[selectedSeries];
+        const style = this.hasSeries ? this.getSeriesStyle(selectedSeries) : this.getGroupStyle(selectedSeries);
+
+        const targetColorActual = isAll ? this.settings.actualColor : style.actualColor;
+        const targetTransparencyActual = isAll ? this.settings.actualTransparency : this.opacityToTransparency(style.actualOpacity);
+        const targetColorBenchmark = isAll ? this.settings.benchmarkColor : style.benchmarkColor;
+        const targetTransparencyBenchmark = isAll ? this.settings.benchmarkTransparency : this.opacityToTransparency(style.benchmarkOpacity);
+        
+        const targetSelector = isAll ? undefined : (this.hasSeries ? this.seriesSelectors[selectedSeries] : this.groupSelectors[selectedSeries]);
+        const dropdownDisplayName = this.hasSeries ? "Series" : "Base Category";
 
         const columnsSlices: any[] = [
-            this.makeDropdownSlice("columns_seriesSelection", "Series", "columns", "seriesSelection", selectedSeries, seriesItems),
+            this.makeDropdownSlice("columns_seriesSelection", dropdownDisplayName, "columns", "seriesSelection", selectedSeries, seriesItems)
+        ];
+
+        const colourSlices: any[] = [
+            this.makeColorSlice(
+                isAll ? "columns_fill" : `columns_fill_${selectedSeries}`,
+                "Fill",
+                "columns",
+                "fill",
+                this.settings.fill,
+                targetSelector
+            ),
             this.makeColorSlice(
                 isAll ? "columns_actualColor" : `columns_actualColor_${selectedSeries}`,
                 "Actual colour",
@@ -364,6 +507,12 @@ export class Visual implements IVisual {
             )
         ];
 
+        const borderSlices: any[] = [
+            this.makeBoolSlice("columns_showBorder", "Show border", "columns", "showBorder", this.settings.showBorder),
+            this.makeColorSlice("columns_borderColor", "Border colour", "columns", "borderColor", this.settings.borderColor),
+            this.makeNumericSlice("columns_borderWidth", "Border width", "columns", "borderWidth", this.settings.borderWidth, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } })
+        ];
+
         const layoutSlices: any[] = [
             this.makeNumericSlice("columns_actualWidth", "Actual width %", "columns", "actualWidth", this.settings.actualWidth, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 }, maxValue: { type: powerbi.visuals.ValidatorType.Max, value: 100 } }),
             this.makeNumericSlice("columns_innerPadding", "Inner padding", "columns", "innerPadding", this.settings.innerPadding, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } }),
@@ -375,9 +524,17 @@ export class Visual implements IVisual {
             uid: "columns_card",
             analyticsPane: false,
             groups: [{
-                displayName: "Apply settings to",
+                displayName: "Apply settings to series",
                 uid: "columns_options_group",
                 slices: columnsSlices
+            }, {
+                displayName: "Colour",
+                uid: "columns_colour_group",
+                slices: colourSlices
+            }, {
+                displayName: "Border",
+                uid: "columns_border_group",
+                slices: borderSlices
             }, {
                 displayName: "Layout",
                 uid: "columns_layout_group",
@@ -385,6 +542,10 @@ export class Visual implements IVisual {
             }],
             revertToDefaultDescriptors: [
                 { objectName: "columns", propertyName: "seriesSelection" },
+                { objectName: "columns", propertyName: "fill" },
+                { objectName: "columns", propertyName: "showBorder" },
+                { objectName: "columns", propertyName: "borderColor" },
+                { objectName: "columns", propertyName: "borderWidth" },
                 { objectName: "columns", propertyName: "actualWidth" },
                 { objectName: "columns", propertyName: "actualColor" },
                 { objectName: "columns", propertyName: "actualTransparency" },
@@ -402,22 +563,36 @@ export class Visual implements IVisual {
             analyticsPane: false,
             topLevelToggle: this.makeTopLevelToggle("dataLabels", "show", this.settings.dataLabelsShow),
             groups: [{
+                displayName: "Values",
+                uid: "dataLabels_values_group",
+                topLevelToggle: this.makeTopLevelToggle("dataLabels", "showValues", this.settings.dataLabelsShowValues),
+                slices: [
+                    this.makeColorSlice("dataLabels_color", "Color", "dataLabels", "color", this.settings.dataLabelsColor),
+                    this.makeFontControlSlice("dataLabels_font", "dataLabels",
+                        this.settings.dataLabelsFontFamily, "fontFamily",
+                        this.settings.dataLabelsFontSize, "fontSize",
+                        this.settings.dataLabelsBold, "bold",
+                        this.settings.dataLabelsItalic, "italic",
+                        this.settings.dataLabelsUnderline, "underline")
+                ]
+            }, {
                 displayName: "Options",
                 uid: "dataLabels_options_group",
                 slices: [
-                    this.makeColorSlice("dataLabels_color", "Color", "dataLabels", "color", this.settings.dataLabelsColor),
-                    this.makeNumericSlice("dataLabels_fontSize", "Text Size", "dataLabels", "fontSize", this.settings.dataLabelsFontSize, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 8 } }),
-                    this.makeFontSlice("dataLabels_fontFamily", "Font Family", "dataLabels", "fontFamily", this.settings.dataLabelsFontFamily),
                     this.makeNumericSlice("dataLabels_displayUnits", "Display Units", "dataLabels", "displayUnits", this.settings.dataLabelsDisplayUnits),
-                    this.makeNumericSlice("dataLabels_valueDecimalPlaces", "Value Decimal Places", "dataLabels", "valueDecimalPlaces", this.settings.dataLabelsValueDecimalPlaces, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } }),
+                    this.makeNumericSlice("dataLabels_valueDecimalPlaces", "Value Decimal Places", "dataLabels", "valueDecimalPlaces", this.settings.dataLabelsValueDecimalPlaces, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 }, placeholder: "AUTO" }),
                     this.makeDropdownSlice("dataLabels_position", "Position", "dataLabels", "position", this.settings.dataLabelsPosition)
                 ]
             }],
             revertToDefaultDescriptors: [
                 { objectName: "dataLabels", propertyName: "show" },
+                { objectName: "dataLabels", propertyName: "showValues" },
                 { objectName: "dataLabels", propertyName: "color" },
                 { objectName: "dataLabels", propertyName: "fontSize" },
                 { objectName: "dataLabels", propertyName: "fontFamily" },
+                { objectName: "dataLabels", propertyName: "bold" },
+                { objectName: "dataLabels", propertyName: "italic" },
+                { objectName: "dataLabels", propertyName: "underline" },
                 { objectName: "dataLabels", propertyName: "displayUnits" },
                 { objectName: "dataLabels", propertyName: "valueDecimalPlaces" },
                 { objectName: "dataLabels", propertyName: "position" }
@@ -435,15 +610,45 @@ export class Visual implements IVisual {
                 uid: "benchmarkLabels_options_group",
                 slices: [
                     this.makeTextSlice("benchmarkLabels_labelPrefix", "Label prefix", "benchmarkLabels", "labelPrefix", this.settings.benchmarkLabelPrefix),
-                    this.makeNumericSlice("benchmarkLabels_fontSize", "Font size", "benchmarkLabels", "fontSize", this.settings.benchmarkLabelFontSize, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 8 } }),
-                    this.makeFontSlice("benchmarkLabels_fontFamily", "Font family", "benchmarkLabels", "fontFamily", this.settings.benchmarkLabelFontFamily)
+                    this.makeFontControlSlice("benchmarkLabels_font", "benchmarkLabels",
+                        this.settings.benchmarkLabelFontFamily, "fontFamily",
+                        this.settings.benchmarkLabelFontSize, "fontSize",
+                        this.settings.benchmarkLabelBold, "bold",
+                        this.settings.benchmarkLabelItalic, "italic",
+                        this.settings.benchmarkLabelUnderline, "underline")
                 ]
             }],
             revertToDefaultDescriptors: [
                 { objectName: "benchmarkLabels", propertyName: "show" },
                 { objectName: "benchmarkLabels", propertyName: "labelPrefix" },
                 { objectName: "benchmarkLabels", propertyName: "fontSize" },
-                { objectName: "benchmarkLabels", propertyName: "fontFamily" }
+                { objectName: "benchmarkLabels", propertyName: "fontFamily" },
+                { objectName: "benchmarkLabels", propertyName: "bold" },
+                { objectName: "benchmarkLabels", propertyName: "italic" },
+                { objectName: "benchmarkLabels", propertyName: "underline" }
+            ]
+        } as any);
+
+        // 8. Chart Padding Card
+        cards.push({
+            displayName: "Chart padding",
+            uid: "chartPadding_card",
+            analyticsPane: false,
+            groups: [{
+                displayName: "Padding",
+                uid: "chartPadding_group",
+                slices: [
+                    this.makeNumericSlice("chartPadding_top", "Top", "chartPadding", "top", this.settings.chartPaddingTop, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } }),
+                    this.makeNumericSlice("chartPadding_right", "Right", "chartPadding", "right", this.settings.chartPaddingRight, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } }),
+                    this.makeNumericSlice("chartPadding_bottom", "Bottom", "chartPadding", "bottom", this.settings.chartPaddingBottom, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } }),
+                    this.makeNumericSlice("chartPadding_left", "Left", "chartPadding", "left", this.settings.chartPaddingLeft, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } })
+                ]
+            }],
+            revertToDefaultDescriptors: [
+                { objectName: "chartPadding", propertyName: "top" },
+                { objectName: "chartPadding", propertyName: "right" },
+                { objectName: "chartPadding", propertyName: "bottom" },
+                { objectName: "chartPadding", propertyName: "left" }
             ]
         } as any);
 
@@ -490,10 +695,10 @@ export class Visual implements IVisual {
                     ? Number((col.highlights[r] as PrimitiveValue) ?? 0)
                     : null;
 
-                if (measureName.includes("actual")) {
+                if (col.source.roles?.["actual"]) {
                     row.actual = rawValue;
                     row.actualHighlight = rawHighlight;
-                } else if (measureName.includes("benchmark")) {
+                } else if (col.source.roles?.["benchmark"]) {
                     row.benchmark = rawValue;
                     row.benchmarkHighlight = rawHighlight;
                 }
@@ -541,6 +746,34 @@ export class Visual implements IVisual {
         return overrides;
     }
 
+    private buildGroupOverrides(dataView: DataView): Record<string, Partial<SeriesStyle>> {
+        const overrides: Record<string, Partial<SeriesStyle>> = {};
+        this.groupSelectors = {};
+        
+        const categorical = dataView.categorical;
+        if (!categorical || !categorical.categories || categorical.categories.length === 0) return overrides;
+
+        const categoryColumn = categorical.categories[0];
+        const values = categoryColumn.values || [];
+        const objects = categoryColumn.objects || [];
+
+        for (let r = 0; r < values.length; r++) {
+            const groupName = String(values[r] ?? "");
+            if (!this.groupSelectors[groupName]) {
+                const selectionId = this.host.createSelectionIdBuilder()
+                    .withCategory(categoryColumn, r)
+                    .createSelectionId();
+                this.groupSelectors[groupName] = selectionId.getSelector() as powerbi.data.Selector;
+                overrides[groupName] = {};
+            }
+            if (objects[r]) {
+                this.applyStyleFromObjects(overrides[groupName], objects[r]);
+            }
+        }
+
+        return overrides;
+    }
+
     private applyStyleFromObjects(style: Partial<SeriesStyle>, objects: powerbi.DataViewObjects): void {
         const actColor = dataViewObjects.getFillColor(objects, { objectName: "columns", propertyName: "actualColor" });
         const actTrans = dataViewObjects.getValue<number>(objects, { objectName: "columns", propertyName: "actualTransparency" });
@@ -554,7 +787,12 @@ export class Visual implements IVisual {
     }
 
     private drawChart(data: ChartRow[], width: number, height: number): void {
-        const margin = { top: 50, right: 20, bottom: 75, left: 60 };
+        const margin = {
+            top: Math.max(0, this.settings.chartPaddingTop),
+            right: Math.max(0, this.settings.chartPaddingRight),
+            bottom: Math.max(0, this.settings.chartPaddingBottom),
+            left: Math.max(0, this.settings.chartPaddingLeft)
+        };
 
         // Adjust margins based on Legend and Axis titles (Simplified approximation)
         if (this.settings.legendShow && this.settings.legendPosition.includes("Top")) margin.top += 30;
@@ -594,7 +832,9 @@ export class Visual implements IVisual {
 
         // Gridlines
         if (this.settings.gridlinesShow) {
-            const yAxisGrid = d3.axisLeft(y).tickSize(-plotWidth).tickFormat("" as any);
+            const yAxisGrid = d3.axisLeft(y)
+                .tickSize(this.settings.gridlinesScaleByWidth ? -plotWidth : -this.settings.gridlinesStrokeWidth)
+                .tickFormat("" as any);
             const gridGroup = this.root.append("g")
                 .attr("class", "gridlines")
                 .call(yAxisGrid);
@@ -602,64 +842,89 @@ export class Visual implements IVisual {
             gridGroup.selectAll("line")
                 .style("stroke", this.settings.gridlinesColor)
                 .style("stroke-width", `${this.settings.gridlinesStrokeWidth}px`)
+                .style("opacity", this.transparencyToOpacity(this.settings.gridlinesTransparency))
                 .style("stroke-dasharray", this.settings.gridlinesLineStyle === "dashed" ? "5,5" : this.settings.gridlinesLineStyle === "dotted" ? "2,2" : "none");
             gridGroup.select(".domain").remove();
         }
 
         // X Axis
-        const xAxisGen = d3.axisBottom(x0).tickPadding(this.settings.xAxisLabelOffset);
+        const xAxisGen = d3.axisBottom(x0)
+            .tickPadding(this.settings.xAxisLabelOffset + this.settings.xAxisPadding);
+            
         const xAxis = this.root.append("g")
             .attr("transform", `translate(0,${plotHeight})`)
             .call(xAxisGen);
 
-        if (!this.settings.xAxisShow) {
-            xAxis.style("display", "none");
+        if (!this.settings.xAxisShow || !this.settings.xAxisShowValues) {
+            xAxis.selectAll("text").style("display", "none");
         } else {
+            const maxWidth = x0.bandwidth();
             xAxis.selectAll("text")
                 .style("fill", this.settings.xAxisLabelColor)
                 .style("font-size", `${this.settings.xAxisFontSize}px`)
-                .style("font-family", this.settings.xAxisFontFamily);
+                .style("font-family", this.settings.xAxisFontFamily)
+                .style("font-weight", this.settings.xAxisBold ? "bold" : "normal")
+                .style("font-style", this.settings.xAxisItalic ? "italic" : "normal")
+                .style("text-decoration", this.settings.xAxisUnderline ? "underline" : "none")
+                .call(this.wrapText, maxWidth);
+        }
 
-            if (this.settings.xAxisShowTitle) {
-                this.root.append("text")
-                    .attr("x", plotWidth / 2)
-                    .attr("y", plotHeight + margin.bottom - 10)
-                    .attr("text-anchor", "middle")
-                    .style("fill", this.settings.xAxisTitleColor)
-                    .style("font-size", `${this.settings.xAxisTitleFontSize}px`)
-                    .style("font-family", this.settings.xAxisTitleFontFamily)
-                    .text(this.settings.xAxisTitleText || "Base Category");
-            }
+        if (!this.settings.xAxisShow) {
+            xAxis.select(".domain").style("display", "none");
+            xAxis.selectAll("line").style("display", "none");
+        }
+
+        if (this.settings.xAxisShow && this.settings.xAxisShowTitle) {
+            this.root.append("text")
+                .attr("x", plotWidth / 2)
+                .attr("y", plotHeight + margin.bottom - 10)
+                .attr("text-anchor", "middle")
+                .style("fill", this.settings.xAxisTitleColor)
+                .style("font-size", `${this.settings.xAxisTitleFontSize}px`)
+                .style("font-family", this.settings.xAxisTitleFontFamily)
+                .style("font-weight", this.settings.xAxisTitleBold ? "bold" : "normal")
+                .style("font-style", this.settings.xAxisTitleItalic ? "italic" : "normal")
+                .style("text-decoration", this.settings.xAxisTitleUnderline ? "underline" : "none")
+                .text(this.settings.xAxisTitleText || "Base Category");
         }
 
         // Y Axis
+        const yAxisGen = this.settings.yAxisPosition === "Right" ? d3.axisRight(y) : d3.axisLeft(y);
+        yAxisGen.tickPadding(this.settings.yAxisPadding);
+
         const yAxis = this.root.append("g")
             .attr("transform", this.settings.yAxisPosition === "Right" ? `translate(${plotWidth},0)` : "translate(0,0)")
-            .call(this.settings.yAxisPosition === "Right" ? d3.axisRight(y) : d3.axisLeft(y));
+            .call(yAxisGen);
 
-        if (!this.settings.yAxisShow) {
-            yAxis.style("display", "none");
+        if (!this.settings.yAxisShowAxisLine || !this.settings.yAxisShow) {
+            yAxis.select(".domain").remove();
+        }
+
+        if (!this.settings.yAxisShow || !this.settings.yAxisShowValues) {
+            yAxis.selectAll("text").style("display", "none");
         } else {
-            if (!this.settings.yAxisShowAxisLine) {
-                yAxis.select(".domain").remove();
-            }
-
             yAxis.selectAll("text")
                 .style("fill", this.settings.yAxisLabelColor)
                 .style("font-size", `${this.settings.yAxisFontSize}px`)
-                .style("font-family", this.settings.yAxisFontFamily);
+                .style("font-family", this.settings.yAxisFontFamily)
+                .style("font-weight", this.settings.yAxisBold ? "bold" : "normal")
+                .style("font-style", this.settings.yAxisItalic ? "italic" : "normal")
+                .style("text-decoration", this.settings.yAxisUnderline ? "underline" : "none");
+        }
 
-            if (this.settings.yAxisShowTitle) {
-                this.root.append("text")
-                    .attr("transform", "rotate(-90)")
-                    .attr("x", -plotHeight / 2)
-                    .attr("y", this.settings.yAxisPosition === "Right" ? plotWidth + 40 : -margin.left + 15)
-                    .attr("text-anchor", "middle")
-                    .style("fill", this.settings.yAxisTitleColor)
-                    .style("font-size", `${this.settings.yAxisTitleFontSize}px`)
-                    .style("font-family", this.settings.yAxisTitleFontFamily)
-                    .text(this.settings.yAxisTitleText || "Value");
-            }
+        if (this.settings.yAxisShow && this.settings.yAxisShowTitle) {
+            this.root.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("x", -plotHeight / 2)
+                .attr("y", this.settings.yAxisPosition === "Right" ? plotWidth + 40 : -margin.left + 15)
+                .attr("text-anchor", "middle")
+                .style("fill", this.settings.yAxisTitleColor)
+                .style("font-size", `${this.settings.yAxisTitleFontSize}px`)
+                .style("font-family", this.settings.yAxisTitleFontFamily)
+                .style("font-weight", this.settings.yAxisTitleBold ? "bold" : "normal")
+                .style("font-style", this.settings.yAxisTitleItalic ? "italic" : "normal")
+                .style("text-decoration", this.settings.yAxisTitleUnderline ? "underline" : "none")
+                .text(this.settings.yAxisTitleText || "Value");
         }
 
         const actualWidthFactor = Math.max(0.1, Math.min(1, this.settings.actualWidth / 100));
@@ -689,10 +954,10 @@ export class Visual implements IVisual {
                 .attr("width", x1.bandwidth())
                 .attr("y", d => y(this.getRenderedBenchmark(d)))
                 .attr("height", d => Math.max(0, plotHeight - y(this.getRenderedBenchmark(d))))
-                .attr("fill", d => isHighContrast ? background : this.getSeriesStyle(d.series).benchmarkColor)
-                .attr("stroke", isHighContrast ? foreground : "none")
-                .attr("stroke-width", isHighContrast ? 1.5 : 0)
-                .attr("opacity", d => isHighContrast ? 1 : this.getSeriesStyle(d.series).benchmarkOpacity)
+                .attr("fill", d => isHighContrast ? background : (this.hasSeries ? this.getSeriesStyle(d.series).benchmarkColor : this.getGroupStyle(d.group).benchmarkColor))
+                .attr("stroke", isHighContrast ? foreground : (this.settings.showBorder ? this.settings.borderColor : "none"))
+                .attr("stroke-width", isHighContrast ? 1.5 : (this.settings.showBorder ? this.settings.borderWidth : 0))
+                .attr("opacity", d => isHighContrast ? 1 : (this.hasSeries ? this.getSeriesStyle(d.series).benchmarkOpacity : this.getGroupStyle(d.group).benchmarkOpacity))
                 .attr("tabindex", 0)
                 .style("cursor", "pointer");
 
@@ -709,10 +974,10 @@ export class Visual implements IVisual {
                 .attr("width", x1.bandwidth() * actualWidthFactor)
                 .attr("y", d => y(this.getRenderedActual(d)))
                 .attr("height", d => Math.max(0, plotHeight - y(this.getRenderedActual(d))))
-                .attr("fill", d => isHighContrast ? foreground : this.getSeriesStyle(d.series).actualColor)
-                .attr("stroke", isHighContrast ? foreground : "none")
-                .attr("stroke-width", isHighContrast ? 1 : 0)
-                .attr("opacity", d => isHighContrast ? 1 : this.getSeriesStyle(d.series).actualOpacity)
+                .attr("fill", d => isHighContrast ? foreground : (this.hasSeries ? this.getSeriesStyle(d.series).actualColor : this.getGroupStyle(d.group).actualColor))
+                .attr("stroke", isHighContrast ? foreground : (this.settings.showBorder ? this.settings.borderColor : "none"))
+                .attr("stroke-width", isHighContrast ? 1 : (this.settings.showBorder ? this.settings.borderWidth : 0))
+                .attr("opacity", d => isHighContrast ? 1 : (this.hasSeries ? this.getSeriesStyle(d.series).actualOpacity : this.getGroupStyle(d.group).actualOpacity))
                 .attr("tabindex", 0)
                 .style("cursor", "pointer");
 
@@ -742,7 +1007,9 @@ export class Visual implements IVisual {
                     .attr("text-anchor", "middle")
                     .style("font-size", `${labelFontSize}px`)
                     .style("font-family", this.settings.benchmarkLabelFontFamily)
-                    .style("font-weight", "600")
+                    .style("font-weight", this.settings.benchmarkLabelBold ? "bold" : "normal")
+                    .style("font-style", this.settings.benchmarkLabelItalic ? "italic" : "normal")
+                    .style("text-decoration", this.settings.benchmarkLabelUnderline ? "underline" : "none")
                     .style("fill", isHighContrast ? foreground : null)
                     .text(d => `${this.settings.benchmarkLabelPrefix}${this.getRenderedBenchmark(d).toFixed(1)}`);
             }
@@ -764,6 +1031,9 @@ export class Visual implements IVisual {
                     .attr("text-anchor", "middle")
                     .style("font-size", `${this.settings.dataLabelsFontSize}px`)
                     .style("font-family", this.settings.dataLabelsFontFamily)
+                    .style("font-weight", this.settings.dataLabelsBold ? "bold" : "normal")
+                    .style("font-style", this.settings.dataLabelsItalic ? "italic" : "normal")
+                    .style("text-decoration", this.settings.dataLabelsUnderline ? "underline" : "none")
                     .style("fill", this.settings.dataLabelsColor)
                     .text(d => {
                         let val = this.getRenderedActual(d);
@@ -776,22 +1046,25 @@ export class Visual implements IVisual {
             // Series Labels under X-axis, used if not using legend natively or if requested by old code
             // Only draw if x-axis is showing and we're not using a standard legend
             if (this.settings.xAxisShow && !this.settings.legendShow) {
-                g.selectAll<SVGTextElement, ChartRow>(".seriesLabel")
-                    .data(groupData)
-                    .enter()
-                    .append("text")
-                    .attr("class", "seriesLabel")
-                    .attr("x", d => (x1(d.series) ?? 0) + x1.bandwidth() / 2)
-                    .attr("y", plotHeight + 20)
-                    .attr("text-anchor", "middle")
-                    .style("font-size", `${Math.max(8, labelFontSize - 1)}px`)
-                    .style("fill", isHighContrast ? foreground : null)
-                    .text(d => d.series);
+                const validSeries = groupData.filter(d => d.series !== "Unknown");
+                if (validSeries.length > 0) {
+                    g.selectAll<SVGTextElement, ChartRow>(".seriesLabel")
+                        .data(validSeries)
+                        .enter()
+                        .append("text")
+                        .attr("class", "seriesLabel")
+                        .attr("x", d => (x1(d.series) ?? 0) + x1.bandwidth() / 2)
+                        .attr("y", plotHeight + 35)
+                        .attr("text-anchor", "middle")
+                        .style("font-size", `${Math.max(8, labelFontSize - 1)}px`)
+                        .style("fill", isHighContrast ? foreground : null)
+                        .text(d => d.series);
+                }
             }
         });
 
         // Draw Legend
-        if (this.settings.legendShow && seriesList.length) {
+        if (this.settings.legendShow && this.hasSeries && seriesList.length) {
             const legendGroup = this.root.append("g").attr("class", "legend");
             
             let yOffset = 10;
@@ -876,6 +1149,19 @@ export class Visual implements IVisual {
             actualOpacity: this.transparencyToOpacity(this.settings.actualTransparency),
             benchmarkColor: this.settings.benchmarkColor,
             benchmarkOpacity: this.transparencyToOpacity(this.settings.benchmarkTransparency)
+        };
+    }
+
+    private getGroupStyle(groupName: string): SeriesStyle {
+        const globalStyle = this.getGlobalStyle();
+        const baseColor = this.host.colorPalette.getColor("Unknown").value;
+        const override = this.groupOverrides[groupName] || {};
+
+        return {
+            actualColor: override.actualColor || globalStyle.actualColor || baseColor,
+            actualOpacity: typeof override.actualOpacity === "number" ? override.actualOpacity : globalStyle.actualOpacity,
+            benchmarkColor: override.benchmarkColor || globalStyle.benchmarkColor || baseColor,
+            benchmarkOpacity: typeof override.benchmarkOpacity === "number" ? override.benchmarkOpacity : globalStyle.benchmarkOpacity
         };
     }
 
@@ -1070,6 +1356,35 @@ export class Visual implements IVisual {
         };
     }
 
+    private makeFontControlSlice(
+        uid: string,
+        objectName: string,
+        fontFamily: string, fontFamilyProp: string,
+        fontSize: number, fontSizeProp: string,
+        bold: boolean, boldProp: string,
+        italic: boolean, italicProp: string,
+        underline: boolean, underlineProp: string,
+        selector?: powerbi.data.Selector
+    ): any {
+        const desc = (prop: string) => ({
+            descriptor: { objectName, propertyName: prop, selector }
+        });
+        return {
+            uid,
+            displayName: "",
+            control: {
+                type: powerbi.visuals.FormattingComponent.FontControl,
+                properties: {
+                    fontFamily: { ...desc(fontFamilyProp), value: fontFamily },
+                    fontSize: { ...desc(fontSizeProp), value: fontSize, options: { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 8 } } },
+                    bold: { ...desc(boldProp), value: bold },
+                    italic: { ...desc(italicProp), value: italic },
+                    underline: { ...desc(underlineProp), value: underline }
+                }
+            }
+        };
+    }
+
     private makeTopLevelToggle(
         objectName: string,
         propertyName: string,
@@ -1133,7 +1448,7 @@ export class Visual implements IVisual {
         this.root
             .selectAll<SVGRectElement, ChartRow>(".benchmark")
             .attr("opacity", d => {
-                const seriesOpacity = this.getSeriesStyle(d.series).benchmarkOpacity;
+                const seriesOpacity = this.hasSeries ? this.getSeriesStyle(d.series).benchmarkOpacity : this.getGroupStyle(d.group).benchmarkOpacity;
 
                 if (!hasSelection) {
                     return seriesOpacity;
@@ -1146,7 +1461,7 @@ export class Visual implements IVisual {
         this.root
             .selectAll<SVGRectElement, ChartRow>(".actual")
             .attr("opacity", d => {
-                const seriesOpacity = this.getSeriesStyle(d.series).actualOpacity;
+                const seriesOpacity = this.hasSeries ? this.getSeriesStyle(d.series).actualOpacity : this.getGroupStyle(d.group).actualOpacity;
 
                 if (!hasSelection) {
                     return seriesOpacity;
@@ -1177,6 +1492,31 @@ export class Visual implements IVisual {
 
     private toPropertySafeName(value: string): string {
         return value.replace(/[^a-zA-Z0-9_]/g, "_");
+    }
+
+    private wrapText(textGroup: d3.Selection<d3.BaseType, any, SVGGElement, any>, width: number): void {
+        textGroup.each(function() {
+            const text = d3.select(this);
+            const words = text.text().split(/\s+/).reverse();
+            let word: string | undefined;
+            let line: string[] = [];
+            let lineNumber = 0;
+            const lineHeight = 1.1; // ems
+            const y = text.attr("y");
+            const dy = parseFloat(text.attr("dy")) || 0;
+            let targetTspan = text.text(null).append("tspan").attr("x", 0).attr("y", y).attr("dy", dy + "em");
+
+            while (word = words.pop()) {
+                line.push(word);
+                targetTspan.text(line.join(" "));
+                if (targetTspan.node()!.getComputedTextLength() > width && line.length > 1) {
+                    line.pop();
+                    targetTspan.text(line.join(" "));
+                    line = [word];
+                    targetTspan = text.append("tspan").attr("x", 0).attr("y", y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                }
+            }
+        });
     }
 
     private renderingStarted(): void {
