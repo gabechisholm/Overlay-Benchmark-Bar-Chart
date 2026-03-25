@@ -1,318 +1,63 @@
 {
   "dataRoles": [
     {
-      "displayName": "Base Category (e.g. Region)",
-      "name": "group",
-      "kind": "Grouping"
-    },
-    {
-      "displayName": "Sub-Category (e.g. Products)",
-      "name": "series",
-      "kind": "Grouping"
-    },
-    {
-      "displayName": "Actual Target Value",
-      "name": "actual",
-      "kind": "Measure"
-    },
-    {
-      "displayName": "Benchmark Comparison Value",
-      "name": "benchmark",
+      "displayName": "Numeric Field",
+      "name": "measure",
       "kind": "Measure"
     }
   ],
   "dataViewMappings": [
     {
-      "categorical": {
-        "categories": {
-          "for": {
-            "in": "group"
-          }
-        },
-        "values": {
-          "group": {
-            "by": "series",
-            "select": [
-              {
-                "bind": {
-                  "to": "actual"
-                }
-              },
-              {
-                "bind": {
-                  "to": "benchmark"
-                }
-              }
-            ]
-          }
-        }
+      "conditions": [
+        { "measure": { "max": 1 } }
+      ],
+      "single": {
+        "role": "measure"
       }
     }
   ],
   "objects": {
-    "legend": {
-        "displayName": "Legend",
-        "properties": {
-            "show": { "displayName": "Show", "type": { "bool": true } },
-            "position": { "displayName": "Position", "type": { "enumeration": [
-                {"value": "Top", "displayName": "Top"},
-                {"value": "Bottom", "displayName": "Bottom"},
-                {"value": "Left", "displayName": "Left"},
-                {"value": "Right", "displayName": "Right"},
-                {"value": "TopCenter", "displayName": "Top Center"},
-                {"value": "BottomCenter", "displayName": "Bottom Center"},
-                {"value": "LeftCenter", "displayName": "Left Center"},
-                {"value": "RightCenter", "displayName": "Right Center"},
-                {"value": "TopLeft", "displayName": "Top Left"},
-                {"value": "TopRight", "displayName": "Top Right"},
-                {"value": "BottomLeft", "displayName": "Bottom Left"},
-                {"value": "BottomRight", "displayName": "Bottom Right"}
-            ] } },
-            "showTitle": { "displayName": "Title", "type": { "bool": true } },
-            "titleText": { "displayName": "Title text", "type": { "text": true } },
-            "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
-            "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
-            "fontFamily": { "displayName": "Font", "type": { "formatting": { "fontFamily": true } } },
-            "bold": { "displayName": "Bold", "type": { "bool": true } },
-            "italic": { "displayName": "Italic", "type": { "bool": true } },
-            "underline": { "displayName": "Underline", "type": { "bool": true } }
-        }
-    },
-    "categoryAxis": {
-      "displayName": "X-axis",
+    "sliderSettings": {
+      "displayName": "Slider",
       "properties": {
-        "show": { "displayName": "Show", "type": { "bool": true } },
-        "labelOffset": { "displayName": "Label offset", "type": { "numeric": true } },
-        "padding": { "displayName": "Padding", "type": { "numeric": true } },
-        "showValues": { "displayName": "Values", "type": { "bool": true } },
-        "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
-        "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
-        "fontFamily": { "displayName": "Font", "type": { "formatting": { "fontFamily": true } } },
-        "bold": { "displayName": "Bold", "type": { "bool": true } },
-        "italic": { "displayName": "Italic", "type": { "bool": true } },
-        "underline": { "displayName": "Underline", "type": { "bool": true } },
-        "showTitle": { "displayName": "Title", "type": { "bool": true } },
-        "titleText": { "displayName": "Title text", "type": { "text": true } },
-        "titleColor": { "displayName": "Title color", "type": { "fill": { "solid": { "color": true } } } },
-        "titleFontSize": { "displayName": "Title text size", "type": { "numeric": true } },
-        "titleFontFamily": { "displayName": "Title font", "type": { "formatting": { "fontFamily": true } } },
-        "titleBold": { "displayName": "Bold", "type": { "bool": true } },
-        "titleItalic": { "displayName": "Italic", "type": { "bool": true } },
-        "titleUnderline": { "displayName": "Underline", "type": { "bool": true } }
+        "trackColor":        { "displayName": "Track colour",        "type": { "fill": { "solid": { "color": true } } } },
+        "fillColor":         { "displayName": "Fill colour",         "type": { "fill": { "solid": { "color": true } } } },
+        "handleColor":       { "displayName": "Handle colour",       "type": { "fill": { "solid": { "color": true } } } },
+        "handleBorderColor": { "displayName": "Handle border colour","type": { "fill": { "solid": { "color": true } } } },
+        "trackHeight":       { "displayName": "Track height",        "type": { "numeric": true } },
+        "handleSize":        { "displayName": "Handle size",         "type": { "numeric": true } },
+        "handleShape":       { "displayName": "Handle shape",        "type": { "enumeration": [
+          { "value": "circle", "displayName": "Circle" },
+          { "value": "square", "displayName": "Square" }
+        ] } },
+        "fillTransparency":  { "displayName": "Fill transparency",   "type": { "numeric": true } },
+        "trackTransparency": { "displayName": "Track transparency",  "type": { "numeric": true } },
+        "showBorder":        { "displayName": "Show handle border",  "type": { "bool": true } },
+        "borderWidth":       { "displayName": "Handle border width", "type": { "numeric": true } }
       }
     },
-    "valueAxis": {
-      "displayName": "Y-axis",
+    "labels": {
+      "displayName": "Labels",
       "properties": {
-        "show": { "displayName": "Show", "type": { "bool": true } },
-        "showAxisLine": { "displayName": "Show axis line", "type": { "bool": true } },
-        "position": { "displayName": "Position", "type": { "enumeration": [
-                {"value": "Left", "displayName": "Left"},
-                {"value": "Right", "displayName": "Right"}
-            ] } },
-        "start": { "displayName": "Start", "type": { "numeric": true } },
-        "end": { "displayName": "End", "type": { "numeric": true } },
-        "padding": { "displayName": "Padding", "type": { "numeric": true } },
-        "showValues": { "displayName": "Values", "type": { "bool": true } },
-        "labelColor": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
-        "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
-        "fontFamily": { "displayName": "Font", "type": { "formatting": { "fontFamily": true } } },
-        "bold": { "displayName": "Bold", "type": { "bool": true } },
-        "italic": { "displayName": "Italic", "type": { "bool": true } },
-        "underline": { "displayName": "Underline", "type": { "bool": true } },
-        "showTitle": { "displayName": "Title", "type": { "bool": true } },
-        "titleText": { "displayName": "Title text", "type": { "text": true } },
-        "titleColor": { "displayName": "Title color", "type": { "fill": { "solid": { "color": true } } } },
-        "titleFontSize": { "displayName": "Title text size", "type": { "numeric": true } },
-        "titleFontFamily": { "displayName": "Title font", "type": { "formatting": { "fontFamily": true } } },
-        "titleBold": { "displayName": "Bold", "type": { "bool": true } },
-        "titleItalic": { "displayName": "Italic", "type": { "bool": true } },
-        "titleUnderline": { "displayName": "Underline", "type": { "bool": true } }
+        "show":             { "displayName": "Show",           "type": { "bool": true } },
+        "showMinMax":       { "displayName": "Show data range","type": { "bool": true } },
+        "color":            { "displayName": "Color",          "type": { "fill": { "solid": { "color": true } } } },
+        "fontSize":         { "displayName": "Text size",      "type": { "numeric": true } },
+        "fontFamily":       { "displayName": "Font",           "type": { "formatting": { "fontFamily": true } } },
+        "bold":             { "displayName": "Bold",           "type": { "bool": true } },
+        "italic":           { "displayName": "Italic",         "type": { "bool": true } },
+        "underline":        { "displayName": "Underline",      "type": { "bool": true } },
+        "displayUnits":     { "displayName": "Display units",  "type": { "numeric": true } },
+        "decimalPlaces":    { "displayName": "Decimal places", "type": { "numeric": true } },
+        "prefix":           { "displayName": "Prefix",         "type": { "text": true } },
+        "suffix":           { "displayName": "Suffix",         "type": { "text": true } }
       }
     },
-    "gridlines": {
-        "displayName": "Gridlines",
-        "properties": {
-            "show": { "displayName": "Show", "type": { "bool": true } },
-            "color": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
-            "transparency": { "displayName": "Transparency", "type": { "numeric": true } },
-            "strokeWidth": { "displayName": "Stroke width", "type": { "numeric": true } },
-            "scaleByWidth": { "displayName": "Scale by width", "type": { "bool": true } },
-            "lineStyle": { "displayName": "Line style", "type": { "enumeration": [
-                {"value": "solid", "displayName": "Solid"},
-                {"value": "dashed", "displayName": "Dashed"},
-                {"value": "dotted", "displayName": "Dotted"}
-            ] } }
-        }
-    },
-    "columns": {
-      "displayName": "Columns",
+    "stepSettings": {
+      "displayName": "Step",
       "properties": {
-        "actualColor": {
-          "displayName": "Actual colour",
-          "type": {
-            "fill": {
-              "solid": {
-                "color": true
-              }
-            }
-          }
-        },
-        "actualTransparency": {
-          "displayName": "Actual transparency",
-          "type": {
-            "numeric": true
-          }
-        },
-        "benchmarkColor": {
-          "displayName": "Benchmark colour",
-          "type": {
-            "fill": {
-              "solid": {
-                "color": true
-              }
-            }
-          }
-        },
-        "benchmarkTransparency": {
-          "displayName": "Benchmark transparency",
-          "type": {
-            "numeric": true
-          }
-        },
-        "seriesSelection": {
-          "displayName": "Series",
-          "type": {
-            "text": true
-          }
-        },
-        "fill": {
-          "displayName": "Fill",
-          "type": {
-            "fill": {
-              "solid": {
-                "color": true
-              }
-            }
-          }
-        },
-        "showBorder": {
-          "displayName": "Show border",
-          "type": {
-            "bool": true
-          }
-        },
-        "borderColor": {
-          "displayName": "Border colour",
-          "type": {
-            "fill": {
-              "solid": {
-                "color": true
-              }
-            }
-          }
-        },
-        "borderWidth": {
-          "displayName": "Border width",
-          "type": {
-            "numeric": true
-          }
-        },
-        "actualWidth": {
-          "displayName": "Actual width %",
-          "type": {
-            "numeric": true
-          }
-        },
-        "innerPadding": { "displayName": "Inner padding", "type": { "numeric": true } },
-        "groupPadding": { "displayName": "Group padding", "type": { "numeric": true } }
-      }
-    },
-    "dataLabels": {
-        "displayName": "Data labels",
-        "properties": {
-            "show": { "displayName": "Show", "type": { "bool": true } },
-            "showValues": { "displayName": "Values", "type": { "bool": true } },
-            "color": { "displayName": "Color", "type": { "fill": { "solid": { "color": true } } } },
-            "fontSize": { "displayName": "Text size", "type": { "numeric": true } },
-            "fontFamily": { "displayName": "Font", "type": { "formatting": { "fontFamily": true } } },
-            "bold": { "displayName": "Bold", "type": { "bool": true } },
-            "italic": { "displayName": "Italic", "type": { "bool": true } },
-            "underline": { "displayName": "Underline", "type": { "bool": true } },
-            "displayUnits": { "displayName": "Display units", "type": { "numeric": true } },
-            "valueDecimalPlaces": { "displayName": "Value decimal places", "type": { "numeric": true } },
-            "position": { "displayName": "Position", "type": { "enumeration": [
-                {"value": "Auto", "displayName": "Auto"},
-                {"value": "InsideEnd", "displayName": "Inside end"},
-                {"value": "InsideCenter", "displayName": "Inside center"},
-                {"value": "InsideBase", "displayName": "Inside base"},
-                {"value": "OutsideEnd", "displayName": "Outside end"}
-            ] } }
-        }
-    },
-    "benchmarkLabels": {
-      "displayName": "Benchmark labels",
-      "properties": {
-        "show": {
-          "displayName": "Show",
-          "type": {
-            "bool": true
-          }
-        },
-        "labelPrefix": {
-          "displayName": "Label prefix",
-          "type": {
-            "text": true
-          }
-        },
-        "fontSize": {
-          "displayName": "Font size",
-          "type": {
-            "numeric": true
-          }
-        },
-        "fontFamily": {
-          "displayName": "Font",
-          "type": {
-            "formatting": {
-              "fontFamily": true
-            }
-          }
-        },
-        "bold": {
-          "displayName": "Bold",
-          "type": {
-            "bool": true
-          }
-        },
-        "italic": {
-          "displayName": "Italic",
-          "type": {
-            "bool": true
-          }
-        },
-        "underline": {
-          "displayName": "Underline",
-          "type": {
-            "bool": true
-          }
-        },
-        "valueDecimalPlaces": { 
-          "displayName": "Value decimal places", 
-          "type": { 
-            "numeric": true 
-          } 
-        },
-        "color": {
-          "displayName": "Color",
-          "type": {
-            "fill": {
-              "solid": {
-                "color": true
-              }
-            }
-          }
-        }
+        "autoStep": { "displayName": "Auto step", "type": { "bool": true } },
+        "stepValue": { "displayName": "Step value", "type": { "numeric": true } }
       }
     },
     "chartPadding": {
@@ -325,13 +70,16 @@
       }
     }
   },
-  "supportsHighlight": true,
+  "supportsHighlight": false,
   "supportsKeyboardFocus": true,
-  "supportsMultiVisualSelection": true,
+  "supportsMultiVisualSelection": false,
   "supportsEmptyDataView": true,
   "supportsLandingPage": true,
-  "sorting": {
-    "default": {}
-  },
-  "privileges": []
+  "privileges": [],
+  "filterAdapters": [
+    {
+      "type": "advancedFilter",
+      "role": "measure"
+    }
+  ]
 }
