@@ -32,6 +32,7 @@ export interface VisualSettings {
     xAxisTitleBold: boolean;
     xAxisTitleItalic: boolean;
     xAxisTitleUnderline: boolean;
+    xAxisLabelAngle: number;
 
     // Y-axis
     yAxisShow: boolean;
@@ -75,6 +76,7 @@ export interface VisualSettings {
     benchmarkColor: string;
     benchmarkTransparency: number;
     actualWidth: number;
+    benchmarkWidth: number;
     innerPadding: number;
     groupPadding: number;
 
@@ -94,6 +96,8 @@ export interface VisualSettings {
     // Benchmark labels
     showBenchmarkLabels: boolean;
     benchmarkLabelPrefix: string;
+    benchmarkLabelDecimalPlaces: number | null;
+    benchmarkLabelColor: string;
     benchmarkLabelFontSize: number;
     benchmarkLabelFontFamily: string;
     benchmarkLabelBold: boolean;
@@ -143,6 +147,7 @@ export class SettingsParser {
             xAxisTitleBold: this.getBool(objects, "categoryAxis", "titleBold", false),
             xAxisTitleItalic: this.getBool(objects, "categoryAxis", "titleItalic", false),
             xAxisTitleUnderline: this.getBool(objects, "categoryAxis", "titleUnderline", false),
+            xAxisLabelAngle: this.getNumber(objects, "categoryAxis", "labelAngle", -45),
 
             // Y-axis
             yAxisShow: this.getBool(objects, "valueAxis", "show", true),
@@ -185,7 +190,8 @@ export class SettingsParser {
             actualTransparency: Math.max(0, Math.min(100, this.getNumber(objects, "columns", "actualTransparency", 0))),
             benchmarkColor: this.getFillColor(objects, "columns", "benchmarkColor", ""),
             benchmarkTransparency: Math.max(0, Math.min(100, this.getNumber(objects, "columns", "benchmarkTransparency", 70))),
-            actualWidth: Math.max(0, Math.min(100, this.getNumber(objects, "columns", "actualWidth", 65))),
+            actualWidth: Math.max(0, Math.min(100, SettingsParser.getNumber(objects, "columns", "actualWidth", 40))),
+            benchmarkWidth: Math.max(0, Math.min(100, SettingsParser.getNumber(objects, "columns", "benchmarkWidth", 70))),
             innerPadding: Math.max(0, this.getNumber(objects, "columns", "innerPadding", 20)),
             groupPadding: Math.max(0, this.getNumber(objects, "columns", "groupPadding", 20)),
 
@@ -203,8 +209,10 @@ export class SettingsParser {
             dataLabelsPosition: this.getString(objects, "dataLabels", "position", "Auto"),
 
             // Benchmark labels
-            showBenchmarkLabels: this.getBool(objects, "benchmarkLabels", "show", true),
+            showBenchmarkLabels: SettingsParser.getBool(objects, "benchmarkLabels", "show", false),
             benchmarkLabelPrefix: this.getString(objects, "benchmarkLabels", "labelPrefix", "National Average: "),
+            benchmarkLabelDecimalPlaces: this.getNumberOptional(objects, "benchmarkLabels", "valueDecimalPlaces"),
+            benchmarkLabelColor: this.getFillColor(objects, "benchmarkLabels", "color", ""),
             benchmarkLabelFontSize: Math.max(8, this.getNumber(objects, "benchmarkLabels", "fontSize", 9)),
             benchmarkLabelFontFamily: this.getString(objects, "benchmarkLabels", "fontFamily", "Segoe UI"),
             benchmarkLabelBold: this.getBool(objects, "benchmarkLabels", "bold", false),
