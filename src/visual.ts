@@ -102,6 +102,7 @@ export class Visual implements IVisual {
             xAxisTitleBold: false,
             xAxisTitleItalic: false,
             xAxisTitleUnderline: false,
+            xAxisLabelAngle: 0,
 
             // Y-axis
             yAxisShow: true,
@@ -145,6 +146,7 @@ export class Visual implements IVisual {
             benchmarkColor: "",
             benchmarkTransparency: 70,
             actualWidth: 65,
+            benchmarkWidth: 100,
             innerPadding: 20,
             groupPadding: 20,
 
@@ -164,6 +166,8 @@ export class Visual implements IVisual {
             // Benchmark labels
             showBenchmarkLabels: true,
             benchmarkLabelPrefix: "National Average: ",
+            benchmarkLabelDecimalPlaces: null,
+            benchmarkLabelColor: "",
             benchmarkLabelFontSize: 9,
             benchmarkLabelFontFamily: "Segoe UI",
             benchmarkLabelBold: false,
@@ -297,7 +301,8 @@ export class Visual implements IVisual {
                         this.settings.xAxisItalic, "italic",
                         this.settings.xAxisUnderline, "underline"),
                     this.makeNumericSlice("categoryAxis_labelOffset", "Label offset", "categoryAxis", "labelOffset", this.settings.xAxisLabelOffset),
-                    this.makeNumericSlice("categoryAxis_padding", "Padding", "categoryAxis", "padding", this.settings.xAxisPadding)
+                    this.makeNumericSlice("categoryAxis_padding", "Padding", "categoryAxis", "padding", this.settings.xAxisPadding),
+                    this.makeNumericSlice("categoryAxis_labelAngle", "Label angle", "categoryAxis", "labelAngle", this.settings.xAxisLabelAngle)
                 ]
             }, {
                 displayName: "Title",
@@ -319,6 +324,7 @@ export class Visual implements IVisual {
                 { objectName: "categoryAxis", propertyName: "showValues" },
                 { objectName: "categoryAxis", propertyName: "labelOffset" },
                 { objectName: "categoryAxis", propertyName: "padding" },
+                { objectName: "categoryAxis", propertyName: "labelAngle" },
                 { objectName: "categoryAxis", propertyName: "labelColor" },
                 { objectName: "categoryAxis", propertyName: "fontSize" },
                 { objectName: "categoryAxis", propertyName: "fontFamily" },
@@ -515,6 +521,7 @@ export class Visual implements IVisual {
 
         const layoutSlices: any[] = [
             this.makeNumericSlice("columns_actualWidth", "Actual width %", "columns", "actualWidth", this.settings.actualWidth, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 }, maxValue: { type: powerbi.visuals.ValidatorType.Max, value: 100 } }),
+            this.makeNumericSlice("columns_benchmarkWidth", "Benchmark width %", "columns", "benchmarkWidth", this.settings.benchmarkWidth, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 }, maxValue: { type: powerbi.visuals.ValidatorType.Max, value: 100 } }),
             this.makeNumericSlice("columns_innerPadding", "Inner padding", "columns", "innerPadding", this.settings.innerPadding, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } }),
             this.makeNumericSlice("columns_groupPadding", "Group padding", "columns", "groupPadding", this.settings.groupPadding, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 } })
         ];
@@ -547,6 +554,7 @@ export class Visual implements IVisual {
                 { objectName: "columns", propertyName: "borderColor" },
                 { objectName: "columns", propertyName: "borderWidth" },
                 { objectName: "columns", propertyName: "actualWidth" },
+                { objectName: "columns", propertyName: "benchmarkWidth" },
                 { objectName: "columns", propertyName: "actualColor" },
                 { objectName: "columns", propertyName: "actualTransparency" },
                 { objectName: "columns", propertyName: "benchmarkColor" },
@@ -610,6 +618,8 @@ export class Visual implements IVisual {
                 uid: "benchmarkLabels_options_group",
                 slices: [
                     this.makeTextSlice("benchmarkLabels_labelPrefix", "Label prefix", "benchmarkLabels", "labelPrefix", this.settings.benchmarkLabelPrefix),
+                    this.makeNumericSlice("benchmarkLabels_valueDecimalPlaces", "Value decimal places", "benchmarkLabels", "valueDecimalPlaces", this.settings.benchmarkLabelDecimalPlaces, undefined, { minValue: { type: powerbi.visuals.ValidatorType.Min, value: 0 }, placeholder: "AUTO" }),
+                    this.makeColorSlice("benchmarkLabels_color", "Color", "benchmarkLabels", "color", this.settings.benchmarkLabelColor || "#333333"),
                     this.makeFontControlSlice("benchmarkLabels_font", "benchmarkLabels",
                         this.settings.benchmarkLabelFontFamily, "fontFamily",
                         this.settings.benchmarkLabelFontSize, "fontSize",
@@ -621,6 +631,8 @@ export class Visual implements IVisual {
             revertToDefaultDescriptors: [
                 { objectName: "benchmarkLabels", propertyName: "show" },
                 { objectName: "benchmarkLabels", propertyName: "labelPrefix" },
+                { objectName: "benchmarkLabels", propertyName: "valueDecimalPlaces" },
+                { objectName: "benchmarkLabels", propertyName: "color" },
                 { objectName: "benchmarkLabels", propertyName: "fontSize" },
                 { objectName: "benchmarkLabels", propertyName: "fontFamily" },
                 { objectName: "benchmarkLabels", propertyName: "bold" },
@@ -859,14 +871,23 @@ export class Visual implements IVisual {
             xAxis.selectAll("text").style("display", "none");
         } else {
             const maxWidth = x0.bandwidth();
-            xAxis.selectAll("text")
+            const angle = this.settings.xAxisLabelAngle;
+            const texts = xAxis.selectAll("text")
                 .style("fill", this.settings.xAxisLabelColor)
                 .style("font-size", `${this.settings.xAxisFontSize}px`)
                 .style("font-family", this.settings.xAxisFontFamily)
                 .style("font-weight", this.settings.xAxisBold ? "bold" : "normal")
                 .style("font-style", this.settings.xAxisItalic ? "italic" : "normal")
-                .style("text-decoration", this.settings.xAxisUnderline ? "underline" : "none")
-                .call(this.wrapText, maxWidth);
+                .style("text-decoration", this.settings.xAxisUnderline ? "underline" : "none");
+                
+            if (angle) {
+                texts.attr("transform", `rotate(${angle})`)
+                     .style("text-anchor", angle < 0 ? "end" : "start")
+                     .attr("dx", angle < 0 ? "-0.8em" : "0.8em")
+                     .attr("dy", "0.15em");
+            } else {
+                texts.call(this.wrapText, maxWidth);
+            }
         }
 
         if (!this.settings.xAxisShow) {
@@ -928,6 +949,7 @@ export class Visual implements IVisual {
         }
 
         const actualWidthFactor = Math.max(0.1, Math.min(1, this.settings.actualWidth / 100));
+        const benchmarkWidthFactor = Math.max(0.1, Math.min(1, this.settings.benchmarkWidth / 100));
         const labelFontSize = Math.max(8, this.settings.benchmarkLabelFontSize);
         const isHighContrast = !!this.host.colorPalette.isHighContrast;
         const foreground = this.host.colorPalette.foreground.value;
@@ -950,8 +972,12 @@ export class Visual implements IVisual {
                 .enter()
                 .append("rect")
                 .attr("class", "benchmark")
-                .attr("x", d => x1(d.series) ?? 0)
-                .attr("width", x1.bandwidth())
+                .attr("x", d => {
+                    const bandX = x1(d.series) ?? 0;
+                    const benchBarWidth = x1.bandwidth() * benchmarkWidthFactor;
+                    return bandX + (x1.bandwidth() - benchBarWidth) / 2;
+                })
+                .attr("width", x1.bandwidth() * benchmarkWidthFactor)
                 .attr("y", d => y(this.getRenderedBenchmark(d)))
                 .attr("height", d => Math.max(0, plotHeight - y(this.getRenderedBenchmark(d))))
                 .attr("fill", d => isHighContrast ? background : (this.hasSeries ? this.getSeriesStyle(d.series).benchmarkColor : this.getGroupStyle(d.group).benchmarkColor))
@@ -992,8 +1018,41 @@ export class Visual implements IVisual {
                     this.selectionManager.showContextMenu(d.selectionId, { x: event.clientX, y: event.clientY });
                 });
 
-            this.tooltipServiceWrapper.addTooltip(actualBars as any, (args: TooltipEventArgs<ChartRow>) => this.getTooltipData(args.data, "Actual"), () => null);
-            this.tooltipServiceWrapper.addTooltip(benchmarkBars as any, (args: TooltipEventArgs<ChartRow>) => this.getTooltipData(args.data, "Benchmark"), () => null);
+            actualBars.on("mouseover", (event: PointerEvent, d: ChartRow) => {
+                this.host.tooltipService.show({
+                    coordinates: [event.clientX, event.clientY],
+                    isTouchEvent: false,
+                    dataItems: this.getTooltipData(d, "Actual"),
+                    identities: [d.selectionId]
+                });
+            }).on("mousemove", (event: PointerEvent, d: ChartRow) => {
+                this.host.tooltipService.move({
+                    coordinates: [event.clientX, event.clientY],
+                    isTouchEvent: false,
+                    dataItems: this.getTooltipData(d, "Actual"),
+                    identities: [d.selectionId]
+                });
+            }).on("mouseout", () => {
+                this.host.tooltipService.hide({ isTouchEvent: false, immediately: true });
+            });
+
+            benchmarkBars.on("mouseover", (event: PointerEvent, d: ChartRow) => {
+                this.host.tooltipService.show({
+                    coordinates: [event.clientX, event.clientY],
+                    isTouchEvent: false,
+                    dataItems: this.getTooltipData(d, "Benchmark"),
+                    identities: [d.selectionId]
+                });
+            }).on("mousemove", (event: PointerEvent, d: ChartRow) => {
+                this.host.tooltipService.move({
+                    coordinates: [event.clientX, event.clientY],
+                    isTouchEvent: false,
+                    dataItems: this.getTooltipData(d, "Benchmark"),
+                    identities: [d.selectionId]
+                });
+            }).on("mouseout", () => {
+                this.host.tooltipService.hide({ isTouchEvent: false, immediately: true });
+            });
 
             // Benchmark Labels (top of thick bar)
             if (this.settings.showBenchmarkLabels) {
@@ -1010,8 +1069,14 @@ export class Visual implements IVisual {
                     .style("font-weight", this.settings.benchmarkLabelBold ? "bold" : "normal")
                     .style("font-style", this.settings.benchmarkLabelItalic ? "italic" : "normal")
                     .style("text-decoration", this.settings.benchmarkLabelUnderline ? "underline" : "none")
-                    .style("fill", isHighContrast ? foreground : null)
-                    .text(d => `${this.settings.benchmarkLabelPrefix}${this.getRenderedBenchmark(d).toFixed(1)}`);
+                    .style("fill", isHighContrast ? foreground : (this.settings.benchmarkLabelColor || null))
+                    .text(d => {
+                        const val = this.getRenderedBenchmark(d);
+                        const formatted = this.settings.benchmarkLabelDecimalPlaces !== null
+                            ? val.toFixed(this.settings.benchmarkLabelDecimalPlaces)
+                            : val.toLocaleString(undefined, { maximumFractionDigits: 10 }).replace(/\.?0+$/, "") || val.toString();
+                        return `${this.settings.benchmarkLabelPrefix}${formatted}`;
+                    });
             }
 
             // Data Labels
@@ -1092,7 +1157,19 @@ export class Visual implements IVisual {
                     .style("fill", this.settings.legendLabelColor);
             }
 
-            let xOffset = this.settings.legendShowTitle ? 50 : 0;
+            let xOffset = 0;
+            if (this.settings.legendShowTitle) {
+                const titleText = legendGroup.append("text")
+                    .attr("x", 0)
+                    .attr("y", 10)
+                    .text(this.settings.legendTitleText)
+                    .style("font-size", `${this.settings.legendFontSize}px`)
+                    .style("font-family", this.settings.legendFontFamily)
+                    .style("font-weight", "bold")
+                    .style("fill", this.settings.legendLabelColor);
+                xOffset = (titleText.node() as SVGTextElement).getComputedTextLength() + 15;
+            }
+
             seriesList.forEach(series => {
                 const style = this.getSeriesStyle(series);
 
@@ -1103,7 +1180,7 @@ export class Visual implements IVisual {
                     .attr("height", 10)
                     .attr("fill", style.actualColor);
 
-                legendGroup.append("text")
+                const label = legendGroup.append("text")
                     .attr("x", xOffset + 15)
                     .attr("y", 10)
                     .text(series)
@@ -1111,7 +1188,7 @@ export class Visual implements IVisual {
                     .style("font-family", this.settings.legendFontFamily)
                     .style("fill", this.settings.legendLabelColor);
 
-                xOffset += 80;
+                xOffset += (label.node() as SVGTextElement).getComputedTextLength() + 25;
             });
         }
 
@@ -1128,11 +1205,41 @@ export class Visual implements IVisual {
     private getTooltipData(d: ChartRow, kind: "Actual" | "Benchmark"): VisualTooltipDataItem[] {
         const value = kind === "Actual" ? this.getRenderedActual(d) : this.getRenderedBenchmark(d);
 
-        return [
-            { displayName: "Base Category", value: d.group },
-            { displayName: "Sub-Category", value: d.series },
-            { displayName: kind === "Actual" ? "Actual Target Value" : "Benchmark Comparison Value", value: value.toString() }
-        ];
+        let categoryName = "Base Category";
+        let seriesName = "Sub-Category";
+        let measureName = kind === "Actual" ? "Actual Target Value" : "Benchmark Comparison Value";
+
+        const categorical = this.currentDataView?.categorical;
+        if (categorical) {
+            if (categorical.categories?.[0]?.source?.displayName) {
+                categoryName = categorical.categories[0].source.displayName;
+            }
+            if (categorical.values?.source?.displayName) {
+                seriesName = categorical.values.source.displayName;
+            }
+            const valueColumns = categorical.values || [];
+            for (let i = 0; i < valueColumns.length; i++) {
+                const col = valueColumns[i];
+                if (kind === "Actual" && col.source.roles?.["actual"]) {
+                    measureName = col.source.displayName;
+                    break;
+                } else if (kind === "Benchmark" && col.source.roles?.["benchmark"]) {
+                    measureName = col.source.displayName;
+                    break;
+                }
+            }
+        }
+
+        const dataItems: VisualTooltipDataItem[] = [];
+        dataItems.push({ displayName: categoryName, value: String(d.group) });
+        
+        if (this.hasSeries && d.series !== "Unknown" && d.series !== "") {
+            dataItems.push({ displayName: seriesName, value: String(d.series) });
+        }
+        
+        dataItems.push({ displayName: measureName, value: value.toString() });
+
+        return dataItems;
     }
 
     private getRenderedActual(d: ChartRow): number {
